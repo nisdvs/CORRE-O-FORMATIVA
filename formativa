@@ -1,0 +1,180 @@
+1 PASSO - Na aplicação devem existir cadastramento de usuários, com dados principais dos mesmos, como nome, email, data de nascimento, senha, data de cadastro e mais alguns dados que julgar pertinente:
+FAZER A TABELA DE USUÁRIOS.
+
+create table usuarios
+id bigint
+nome varchar(150)
+email varchar(150)
+datanascimento date
+datacadastro datetime
+senha varchar (50)
+ocupaçãoFK bigint
+nivelacessoFK bigint
+status boolean
+
+
+2 PASSO - Deve existir distinções entre as ocupações dos usuários na escola, ou seja, coordenador, orientador, assistente social, secretária, etc…;
+
+create table ocupações
+id bigint
+titulo varchar (150)
+nivelacessoFK bigint
+
+3 PASSO - Também deve existir na aplicação algumas regras de acesso, como: “Admin” – pode alterar tudo na aplicação, possui o maior nível de acesso;
+ “Gestor” – nível inferior ao admin, mas com acesso pleno ao cadastro de cadastro de usuarios, cadastro de ambientes, pode cancelar um evento, emitir relatório, etc.
+“Usuário” – pode fazer reservas, mas não cadastrar usuários e nem cancelar eventos
+“Visitante” – pode se inscrever em um evento participante;
+
+create table nivelacesso
+id bigint
+nivel varchar (100)
+descricao varchar (150)
+
+4 PASSO - Cada local / ambiente cadastrado deve possuir algumas informações pertinentes, dentre elas o nome do local, bloco da universidade (blocos existentes são A,B,C,D),  e também a ocupação do local em quantidade de pessoas;
+
+create table local
+id bigint
+nome varchar (100)
+lotacao bigint
+bloco enum ("A", "B","C", "D")
+
+5 PASSO - Além das informações mencionadas anteriormente, cada local deve ter um check list do que é presente ou não no mesmo, porém este check list deve ser flexível, podendo ser adicionado ou não na lista de perguntas dentro do sistema, por exemplo: 
+Laboratório de Eletrônica 1: 
+	Projetor  
+	TV Smart 
+	Ar condicionado
+	WorkStation
+
+
+create table check list
+id bigint
+localFK bigint
+itemFK bigint
+
+
+create table item
+id bigint
+nome varchar(100)
+
+
+6 PASSO - Este projeto, além do agendamento de ambientes, também deve contar com a possibilidade de check-in dos participantes do evento, ou seja, os usuários cadastrados podem entrar na aplicação e escolher qual evento desejam participar, reservando seu bilhete de entrada;
+
+create table eventos
+id bigint
+nome varchar(150)
+data_começo datetime
+data_fim datetime
+vagas int
+localFK bigint
+responsaveleventoFK bigint
+iniciocheckin datetime
+fimcheckin datetime
+
+7 PASSO - Quando o usuário realizar o check-in em um evento, deve-se gerar um ticket para o mesmo contendo a informação do usuário e do evento, mantendo o histórico dessa informação (não está no escopo reserva de assentos, apenas da presença do participante).;
+
+create table checkin
+id bigint
+eventoFK bigint
+usuarioFK bigint
+dataCheckin datetime
+
+8 PASSO - Após a realização do check-in, a quantidade disponível de vagas dentro do evento deve ser diminuida (isso deve ser feito via procedure, não se preocupe com este requisito, mas planeje com que o evento possa guardar essa informação);
+
+ja esta na tabela eventos "vagas int"
+
+9 PASSO - Ao se cadastrar um evento, deve ser possível também programar quanto tempo antes do início do evento pode-se realizar o check-in e o tempo máximo para o mesmo;
+
+esta na tabela eventos "iniciocheckin datetime e fimcheckin datetime"
+
+
+A PROBLEMATICA - Problemática a ser considerada:  Nesta aplicação os usuários cadastrados podem um dia ser também excluídos, porém, ao se excluir um usuário que já participou de eventos, seu ID está na base de dados de eventos e portanto haverá problemas ao tentar realizar esta exclusão visto que este relacionamento entre chaves ficará faltante. Desse modo, como você resolveria este problema? Ou seja, como poder eliminar com que usuários não mais autorizados usem seu sistema sem no entanto eliminar todo o o histórico que eles possuem em sua aplicação??? Implemente sua solução já no projeto.  
+
+adicionado "status boolean" na tabela de usuarios
+
+
+CRIAÇÃO DAS TABELAS NO MYSQL
+
+create database formativa;
+use formativa;
+
+create table nivelacesso(
+id bigint not null auto_increment,
+nivel varchar (100) not null,
+descricao varchar (150),
+primary key(id)
+);
+
+create table ocupações(
+id bigint not null auto_increment,
+titulo varchar (150) not null,
+nivelacessoFK bigint not null,
+primary key(id),
+foreign key (nivelacessoFK) references nivelacesso(id)
+);
+
+create table usuarios(
+id bigint not null auto_increment,
+nome varchar(150) not null,
+email varchar(150) not null,
+datanascimento date not null,
+datacadastro datetime not null default now(),
+senha varchar (50) not null,
+ocupaçãoFK bigint,
+status boolean default true,
+primary key (id),
+foreign key (ocupacaoFK) references ocupações(id)
+);
+
+create table item(
+id bigint not null auto_increment,
+nome varchar(100) not null,
+primary key(id)
+);
+
+create table local(
+id bigint not null auto_increment,
+nome varchar (100) not null,
+lotacao bigint not null,
+bloco enum ("A", "B","C", "D") not null,
+primary key(id)
+);
+
+
+create table checklist(
+id bigint not null auto_increment,
+localFK bigint not null,
+itemFK bigint not null,
+primary key(id),
+foreign key (localFK) references local(id),
+foreign key (itemKF) references item(id)
+);
+
+create table eventos(
+id bigint not null auto_increment,
+nome varchar(150) not null,
+data_começo datetime not null,
+data_fim datetime not null,
+vagas int not null,
+localFK bigint not null,
+responsaveleventoFK bigint not null,
+iniciocheckin datetime not null,
+fimcheckin datetime not null,
+primary key(id),
+foreign key (localFK) references local(id),
+foreign key (responsaveleventoFK) references usuario(id)
+);
+
+
+create table checkin(
+id bigint not null auto_increment,
+eventoFK bigint not null,
+usuarioFK bigint not null,
+datacheckin datetime not null default now(),
+primary key(id),
+foreign key (eventoFK) references evento(id),
+foreign key (usuarioFK) references usuario(id)
+);
+
+
+
+
